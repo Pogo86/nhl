@@ -1,14 +1,10 @@
-import pandas as pd
-import requests
 import random
+import requests
 from bs4 import BeautifulSoup as bs
-
-firstDate = 20231026
-lastDate = 20231027
 
 teams = {'Boston' : 'BOS','Buffalo' : 'BUF','Detroit' : 'DET','Florida' : 'FLA','Montreal' : 'MON','Ottawa' : 'OTT','Tampa Bay' :  'TB','Toronto' : 'TOR','Arizona' : 'ARI','Chicago' : 'CHI','Colorado' : 'COL','Dallas' : 'DAL','Minnesota' : 'MIN','Nashville' : 'NSH','St. Louis' : 'STL','Winnipeg' : 'WPG','Carolina' : 'CAR','Columbus' : 'CLB','N.Y. Islanders' : 'NYI','N.Y. Rangers' : 'NYR','New Jersey' :  'NJ','Philadelphia' : 'PHI','Pittsburgh' : 'PIT','Washington' : 'WAS','Anaheim' : 'ANA','Calgary' : 'CGY','Edmonton' : 'EDM','Los Angeles' :  'LA','San Jose' :  'SJ','Seattle' : 'SEA','Vancouver' : 'VAN','Vegas' : 'VGK'}
 
-def rendomHeader():
+def randomHeader():
     user_agents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
@@ -16,17 +12,58 @@ def rendomHeader():
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15'
     ]
     return random.choice(user_agents)
 
-#takes a start date and end dates and returns an array of urls for the play by play for each game in the time frame
-def getGames(startDate, endDate):
+#function that returns an array of gamers that have taken place between a given date range
+def getGames(startDate : int, endDate: int):
+    tempDate = startDate # variable that can be ittereated 
+    gamesList = [] # array where the games can be stored
+    while tempDate <= endDate: # checks if we are still in the date range
+        url = f'https://www.cbssports.com/nhl/schedule/{tempDate}' #base url
+        headers = {'User-Agent': randomHeader()} # url header
+        page = requests.get(url, headers=headers)
+        soup = bs(page.content, 'html.parser') # converts the page to a beautifulsoup item
+        games = soup.findAll('span', class_ = 'TeamName') # findas all the spans on the page with the class TeamName
+        numberOfGames = len(games)/2 #calculate the number of gamers playied
+        count = 1
+        home,away = [],[]
+        for game in games:
+            if count % 2 == 0: home.append(game.text) #even count teams are saved to the home array
+            else: away.append(game.text) #odd count teams are saved to the away array
+            count+=1 #increments the count
+        i=0
+        while i < numberOfGames: #loops through the games
+            print(f'{"."*i}')
+            gameID = f'{tempDate}{teams[away[i]]}@{teams[home[i]]}' #the ID is the date, away team code, @, home team code
+            gamesList.append([teams[away[i]],teams[home[i]],gameID,tempDate]) # adds the game data to the game list array
+            i+=1
+        tempDate+=1 # moves date to be serched to the next date
+    return gamesList # returns the list of games
+
+def getWinners(startDate: int, endDate: int):
+    tempDate = startDate # variable that can be ittereated 
+    winners = []
+    while tempDate <= endDate: # checks if we are still in the date range
+        url = f'https://www.cbssports.com/nhl/schedule/{tempDate}' #base url
+        headers = {'User-Agent': randomHeader()} # url header
+        page = requests.get(url, headers=headers)
+        soup = bs(page.content, 'html.parser') # converts the page to a beautifulsoup item
+        scores = soup.findAll('div', class_ = 'CellGame') # findas all the spans on the page with the class TeamNam
+        for score in scores:
+            winners.append(score.text[:3].strip())
+        tempDate +=1
+    return winners
+
+
+# returns a list of game URLS
+def getGameURL(startDate, endDate):
     tempDate = startDate
     urls = []
     while tempDate <= endDate:
         url = f'https://www.cbssports.com/nhl/schedule/{tempDate}'
-        headers = {'User-Agent': rendomHeader()}
+        headers = {'User-Agent': randomHeader()}
         page = requests.get(url, headers=headers)
         playbyURL = f'https://www.cbssports.com/nhl/gametracker/playbyplay/NHL_{tempDate}_'
 
@@ -41,6 +78,7 @@ def getGames(startDate, endDate):
         tempDate+=1
     return urls
 
+# decides if a goal has assists, and returns an array
 def getAssists(text):
     if len(text) == 1: return ['None', 'None']
     if '), ' in text[1]:
@@ -57,7 +95,7 @@ def getAssists(text):
     else:
         return ['None', 'None']
 
-
+# returns an array of goals for each game
 def getGoalStats(game, gameDate, url):
     redTextGoal = game.find_all('span', class_='gametracker-row__item-red')
     goalCount = len(redTextGoal)
@@ -80,48 +118,37 @@ def getGoalStats(game, gameDate, url):
         assists = getAssists(line)
         goalID = f'{gameDate}{time}{teamID}{goalCount}'
         goals.append([goalID, teamID, p, time, gameDate, scorer, assists,gameID])
+        print(f'{"." * goalCount}')
         goalCount-=1
     return goals
 
+
+def getGoals(firstDate, lastDate):
+    gameURLs = getGameURL(firstDate, lastDate)
+    allGoals = []
+    for url in gameURLs:
+        headers = {'User-Agent': randomHeader()}
+        playbyplay = bs((requests.get(url[0], headers=headers)).content, 'html.parser')
+        allGoals = allGoals + (getGoalStats(playbyplay,url[1],url[0]))
+    return allGoals
+
+
+# checks if a time is given in mm:ss format
 def correctTime(time):
     if ':' in time: return time
     else: return f'00:{time[:2]}'
-    
+
+# converts from mm:ss format to a int in seconds
 def calculateSeconds(time):
     split = time.split(':')
     mins = int(split[0]) * 60
     secs = int(split[1])
     return mins+secs
 
+# calculates the period time
 def periodTime(period):
     if period == '1ST': return 0
     if period == '2ND': return (20*60)
     if period == '3RD': return (40*60)
     if period == 'OVE': return (60*60)
     if period == 'SHO': return (65*60)
-
-
-print('Getting Goals')
-gameURLs = getGames(firstDate, lastDate)
-allGoals = []
-for url in gameURLs:
-    headers = {'User-Agent': rendomHeader()}
-    playbyplay = bs((requests.get(url[0], headers=headers)).content, 'html.parser')
-    allGoals = allGoals + (getGoalStats(playbyplay,url[1],url[0]))
-
-df = pd.DataFrame(allGoals)
-df = df.rename(columns={0:'goalID', 1:'teamID', 2:'period', 3:'goalTime', 4:'goalDate', 5:'scorer', 6:'assists', 7:'gameID'})
-df['goalDate'] = pd.to_datetime(df['goalDate'], format='%Y%m%d')
-
-split = pd.DataFrame(df['assists'].to_list(), columns=['assist1', 'assist2'])
-df = pd.concat([df, split], axis=1)
-df = df.drop(['assists'], axis=1)
-df = df.set_index(['goalID'])
-df['goalTime'] = df['goalTime'].apply(correctTime) #converts time given in seconds to mins
-df['seconds'] = df['goalTime'].apply(calculateSeconds)
-df['periodTime'] = df['period'].apply(periodTime)
-df['seconds'] = df['seconds'] + df['periodTime']
-df = df.drop('periodTime', axis=1)
-df.to_csv(f'{firstDate}-{lastDate}_goals.csv')
-
-print('Done: File Saved')
