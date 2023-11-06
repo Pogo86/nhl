@@ -1,8 +1,8 @@
 import pandas as pd
 import functions as fn
 
-startDate = 20231028
-endDate = 20231031
+startDate = 20231101
+endDate = 20231105
 
 print(f'getting game data from {startDate} to {endDate}')
 
