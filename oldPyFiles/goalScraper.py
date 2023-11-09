@@ -8,7 +8,7 @@ lastDate = 20231031
 
 teams = {'Boston' : 'BOS','Buffalo' : 'BUF','Detroit' : 'DET','Florida' : 'FLA','Montreal' : 'MON','Ottawa' : 'OTT','Tampa Bay' :  'TB','Toronto' : 'TOR','Arizona' : 'ARI','Chicago' : 'CHI','Colorado' : 'COL','Dallas' : 'DAL','Minnesota' : 'MIN','Nashville' : 'NSH','St. Louis' : 'STL','Winnipeg' : 'WPG','Carolina' : 'CAR','Columbus' : 'CLB','N.Y. Islanders' : 'NYI','N.Y. Rangers' : 'NYR','New Jersey' :  'NJ','Philadelphia' : 'PHI','Pittsburgh' : 'PIT','Washington' : 'WAS','Anaheim' : 'ANA','Calgary' : 'CGY','Edmonton' : 'EDM','Los Angeles' :  'LA','San Jose' :  'SJ','Seattle' : 'SEA','Vancouver' : 'VAN','Vegas' : 'VGK'}
 
-df = pd.DataFrame(fn.getGoals(firstDate,lastDate))
+df = pd.DataFrame(fn.get_goals(firstDate,lastDate))
 df = df.rename(columns={0:'goalID', 1:'teamID', 2:'period', 3:'goalTime', 4:'goalDate', 5:'scorer', 6:'assists', 7:'gameID'})
 df['goalDate'] = pd.to_datetime(df['goalDate'], format='%Y%m%d')
 

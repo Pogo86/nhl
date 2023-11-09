@@ -1,5 +1,6 @@
 import random
 import requests
+import datetime
 from bs4 import BeautifulSoup as bs
 
 teams = {'Boston' : 'BOS','Buffalo' : 'BUF','Detroit' : 'DET','Florida' : 'FLA','Montreal' : 'MON','Ottawa' : 'OTT','Tampa Bay' :  'TB','Toronto' : 'TOR','Arizona' : 'ARI','Chicago' : 'CHI','Colorado' : 'COL','Dallas' : 'DAL','Minnesota' : 'MIN','Nashville' : 'NSH','St. Louis' : 'STL','Winnipeg' : 'WPG','Carolina' : 'CAR','Columbus' : 'CLB','N.Y. Islanders' : 'NYI','N.Y. Rangers' : 'NYR','New Jersey' :  'NJ','Philadelphia' : 'PHI','Pittsburgh' : 'PIT','Washington' : 'WAS','Anaheim' : 'ANA','Calgary' : 'CGY','Edmonton' : 'EDM','Los Angeles' :  'LA','San Jose' :  'SJ','Seattle' : 'SEA','Vancouver' : 'VAN','Vegas' : 'LV'}
@@ -17,8 +18,10 @@ def randomHeader():
     ]
     return random.choice(user_agents)
 
-#function that returns an array of gamers that have taken place between a given date range
+
+#function that returns an array of games that have taken place between a given date range
 def getGames(startDate : int, endDate: int):
+    print('Getting Game Data')
     tempDate = startDate # variable that can be ittereated 
     gamesList = [] # array where the games can be stored
     while tempDate <= endDate: # checks if we are still in the date range
@@ -36,14 +39,14 @@ def getGames(startDate : int, endDate: int):
             count+=1 #increments the count
         i=0
         while i < numberOfGames: #loops through the games
-            print(f'{"."*i}')
             gameID = f'{tempDate}{teams[away[i]]}@{teams[home[i]]}' #the ID is the date, away team code, @, home team code
             gamesList.append([teams[away[i]],teams[home[i]],gameID,tempDate]) # adds the game data to the game list array
             i+=1
-        tempDate+=1 # moves date to be serched to the next date
+        tempDate = dateAdd(tempDate) # moves date to be serched to the next date
     return gamesList # returns the list of games
 
 def getWinners(startDate: int, endDate: int):
+    print('Getting Winners')
     tempDate = startDate # variable that can be ittereated 
     winners = []
     while tempDate <= endDate: # checks if we are still in the date range
@@ -54,8 +57,25 @@ def getWinners(startDate: int, endDate: int):
         scores = soup.findAll('div', class_ = 'CellGame') # findas all the spans on the page with the class TeamNam
         for score in scores:
             winners.append(score.text[:3].strip())
-        tempDate +=1
+        tempDate = dateAdd(tempDate)
     return winners
+
+def getOT(startDate: int, endDate: int):
+    print('Checking for Overtime or Shootouts')
+    tempDate = startDate # variable that can be ittereated 
+    ot = []
+    while tempDate <= endDate: # checks if we are still in the date range
+        url = f'https://www.cbssports.com/nhl/schedule/{tempDate}' #base url
+        headers = {'User-Agent': randomHeader()} # url header
+        page = requests.get(url, headers=headers)
+        soup = bs(page.content, 'html.parser') # converts the page to a beautifulsoup item
+        scores = soup.findAll('div', class_ = 'CellGame') # findas all the spans on the page with the class TeamNam
+        for score in scores:
+            if ' / SO' in score.text: ot.append('SO')
+            elif 'O' in score.text[-1]: ot.append('OT')
+            else: ot.append('X')
+        tempDate = dateAdd(tempDate)
+    return ot
 
 
 # returns a list of game URLS
@@ -97,7 +117,7 @@ def getAssists(text):
         return ['None', 'None']
 
 # returns an array of goals for each game
-def getGoalStats(game, gameDate, url):
+def get_goalstats(game, gameDate, url):
     redTextGoal = game.find_all('span', class_='gametracker-row__item-red')
     goalCount = len(redTextGoal)
     goals = [] #list of all the goals scored
@@ -124,13 +144,13 @@ def getGoalStats(game, gameDate, url):
     return goals
 
 
-def getGoals(firstDate, lastDate):
+def get_goals(firstDate, lastDate):
     gameURLs = getGameURL(firstDate, lastDate)
     allGoals = []
     for url in gameURLs:
         headers = {'User-Agent': randomHeader()}
         playbyplay = bs((requests.get(url[0], headers=headers)).content, 'html.parser')
-        allGoals = allGoals + (getGoalStats(playbyplay,url[1],url[0]))
+        allGoals = allGoals + (get_goalstats(playbyplay,url[1],url[0]))
     return allGoals
 
 
@@ -166,3 +186,13 @@ def devisionConvert(d):
     if d == 'c': return('Central')
     if d == 'p': return('Pacific')
     pass
+
+def dateAdd(date):
+    date = str(date)
+    y = int(date[0:4])
+    m = int(date[4:6])
+    d = int(date[6:8])
+    x = datetime.datetime(y,m,d).date()
+    x = x + datetime.timedelta(days=1)
+    print(x)
+    return int(x.strftime("%Y%m%d"))

@@ -13,16 +13,16 @@ class Player:
         self.team = team
         self.goals = 0
 
-    def fullName(self):
+    def get_fullName(self):
         return f'{self.first} {self.last}'
     
-    def addGoal(self):
+    def set_goal(self):
         self.goals +=1
 
-    def getGoals(self):
+    def get_goals(self):
         return(self.goals)
     
-    def getTeam(self):
+    def get_team(self):
         return(self.team)
 
     @classmethod
@@ -48,11 +48,36 @@ class Team:
         self.confrene = cofrence
         self.devision = devision
         self.goals = 0
+        self.gamePlayed = 0
+        self.gameWon = 0
+        self.gameLoss = 0
+        self.otLoss = 0
         self.points = 0
 
-    def incrementGoal(self, amount):
+    def __str__(self):
+        return (f'Team Name : {self.name} \nDevision : {self.devision}, Confrence :{self.confrene} \nGames Played {self.gamePlayed}, won {self.gameWon}, lossed {self.gameLoss}, Overtime Losses {self.otLoss} \nWin percentage of {self.get_winPercent()}')
+
+    def set_goal(self, amount):
         self.goals += amount
-    def incrementScore(self, finish):
-        if finish == 'w':self.points += 2
-        if finish == 'otl':self.points +=1
+
+
+    def set_Result(self, finish):
+        if finish == 'w':
+            self.points += 2
+            self.gameWon +=1
+        if finish == 'otl':
+            self.points +=1
+            self.otLoss +=1
+        if finish == 'l':
+            self.gameLoss +=1
+        self.gamePlayed +=1
+
+    def get_Result(self):
+        return self.name, self.gameWon, self.gameLoss, self.otLoss
+    
+    def get_points(self):
+        return self.points
+    
+    def get_winPercent(self):
+        return self.gameWon / self.gamePlayed
         

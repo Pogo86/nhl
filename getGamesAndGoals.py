@@ -1,7 +1,7 @@
 import pandas as pd
 import functions as fn
 
-startDate = 20231101
+startDate = 20231010
 endDate = 20231108
 
 print(f'getting game data from {startDate} to {endDate}')
@@ -14,6 +14,11 @@ dfw = pd.DataFrame(fn.getWinners(startDate, endDate))
 dfw = dfw.rename(columns={0:'winner'})
 # joins the 2 tables
 df = pd.concat([df,dfw], axis=1, join='inner')
+# checks for SO
+dfot = pd.DataFrame(fn.getOT(startDate, endDate))
+dfot = dfot.rename(columns={0:'SO'})
+# joins the 2 tables
+df = pd.concat([df,dfot], axis=1, join='inner')
 # sets index to the game ID
 df = df.set_index('gameID')
 # sets the date to a date dtype
@@ -24,9 +29,9 @@ df.to_csv(f'{startDate}-{endDate}_games.csv')
 print('Done: Game Data Saved')
 print('.......................................................')
 print(f'getting goal data from {startDate} to {endDate}')
-
+'''
 # gets the data for all goals in the time frame
-df = pd.DataFrame(fn.getGoals(startDate,endDate))
+df = pd.DataFrame(fn.get_goals(startDate,endDate))
 # renames columns
 df = df.rename(columns={0:'goalID', 1:'teamID', 2:'period', 3:'goalTime', 4:'goalDate', 5:'scorer', 6:'assists', 7:'gameID'})
 # sets goalDate to a date Dtype
@@ -52,4 +57,4 @@ df = df.drop('periodTime', axis=1)
 #n saves file
 df.to_csv(f'{startDate}-{endDate}_goals.csv')
 
-print('Done: Goal data saved')
+print('Done: Goal data saved')'''
