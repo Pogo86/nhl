@@ -55,7 +55,7 @@ class Team:
         self.points = 0
 
     def __str__(self):
-        return (f'Team Name : {self.name} \nDevision : {self.devision}, Confrence :{self.confrene} \nGames Played {self.gamePlayed}, won {self.gameWon}, lossed {self.gameLoss}, Overtime Losses {self.otLoss} \nWin percentage of {self.get_winPercent()}')
+        return (f'Team Name : {self.name}, Points : {self.points}\nDevision : {self.devision}, Confrence :{self.confrene} \nGames Played {self.gamePlayed}, won {self.gameWon}, lossed {self.gameLoss}, Overtime Losses {self.otLoss} \nWin percentage of {self.get_winPercent()}')
 
     def set_goal(self, amount):
         self.goals += amount
@@ -81,3 +81,11 @@ class Team:
     def get_winPercent(self):
         return self.gameWon / self.gamePlayed
         
+    def get_devision(self):
+        return self.devision
+    
+    def get_confrene(self):
+        return self.confrene
+    
+    def get_id(self):
+        return self.ID
