@@ -1,9 +1,10 @@
 import pandas as pd
 import functions as fn
 
-startDate = 20231010
-endDate = 20231108
 
+startDate, endDate = (fn.get_dates())
+
+print(startDate, endDate)
 print(f'getting game data from {startDate} to {endDate}')
 
 # gets the game data
@@ -24,12 +25,14 @@ df = df.set_index('gameID')
 # sets the date to a date dtype
 df['gameDate'] = pd.to_datetime(df['gameDate'], format='%Y%m%d')
 # saves as a csv
-df.to_csv(f'{startDate}-{endDate}_games.csv')
+#df.to_csv(f'{startDate}-{endDate}_games.csv')
+
+df.to_sql('game',con=fn.dbConnection(), index=True, if_exists='append')
 
 print('Done: Game Data Saved')
 print('.......................................................')
 print(f'getting goal data from {startDate} to {endDate}')
-'''
+
 # gets the data for all goals in the time frame
 df = pd.DataFrame(fn.get_goals(startDate,endDate))
 # renames columns
@@ -54,7 +57,7 @@ df['periodTime'] = df['period'].apply(fn.periodTime)
 df['seconds'] = df['seconds'] + df['periodTime']
 # drops the period time column
 df = df.drop('periodTime', axis=1)
-#n saves file
-df.to_csv(f'{startDate}-{endDate}_goals.csv')
 
-print('Done: Goal data saved')'''
+df.to_sql('goals',con=fn.dbConnection(), index=True, if_exists='append')
+
+print('Done: Goal data saved')

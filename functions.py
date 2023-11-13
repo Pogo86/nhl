@@ -1,7 +1,12 @@
 import random
 import requests
-import datetime
 from bs4 import BeautifulSoup as bs
+#import datetime
+from datetime import date, timedelta, datetime
+from sqlalchemy import create_engine
+from sqlalchemy.engine import url
+import pypyodbc as odbc
+import pandas as pd
 
 teams = {'Boston' : 'BOS','Buffalo' : 'BUF','Detroit' : 'DET','Florida' : 'FLA','Montreal' : 'MON','Ottawa' : 'OTT','Tampa Bay' :  'TB','Toronto' : 'TOR','Arizona' : 'ARI','Chicago' : 'CHI','Colorado' : 'COL','Dallas' : 'DAL','Minnesota' : 'MIN','Nashville' : 'NSH','St. Louis' : 'STL','Winnipeg' : 'WPG','Carolina' : 'CAR','Columbus' : 'CLB','N.Y. Islanders' : 'NYI','N.Y. Rangers' : 'NYR','New Jersey' :  'NJ','Philadelphia' : 'PHI','Pittsburgh' : 'PIT','Washington' : 'WAS','Anaheim' : 'ANA','Calgary' : 'CGY','Edmonton' : 'EDM','Los Angeles' :  'LA','San Jose' :  'SJ','Seattle' : 'SEA','Vancouver' : 'VAN','Vegas' : 'LV'}
 
@@ -72,7 +77,7 @@ def getOT(startDate: int, endDate: int):
         scores = soup.findAll('div', class_ = 'CellGame') # findas all the spans on the page with the class TeamNam
         for score in scores:
             if ' / SO' in score.text: ot.append('SO')
-            elif 'O' in score.text[-1]: ot.append('OT')
+            elif '/ OT' in score.text: ot.append('OT')
             else: ot.append('X')
         tempDate = dateAdd(tempDate)
     return ot
@@ -192,7 +197,50 @@ def dateAdd(date):
     y = int(date[0:4])
     m = int(date[4:6])
     d = int(date[6:8])
-    x = datetime.datetime(y,m,d).date()
-    x = x + datetime.timedelta(days=1)
+    x = datetime(y,m,d).date()
+    x = x + timedelta(days=1)
     print(x)
     return int(x.strftime("%Y%m%d"))
+
+
+def dbConnection():
+    # Define the database connection URL
+    db_username = "admin"
+    db_password = "There15hopE"
+    db_host = "database-1.cyw9fwvymrk0.eu-west-2.rds.amazonaws.com"
+    db_name = "nhl"
+    db_url = f"mssql+pyodbc://{db_username}:{db_password}@{db_host}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server"
+
+    # Create a SQLAlchemy engine
+    engine = create_engine(db_url, module=odbc)
+    return engine
+
+    
+
+''' Returns the date of the last goal scored and yesterdays date'''
+def get_dates():
+    sqlStatement = 'SELECT MAX(goalDate) from nhl.dbo.goals'
+    engine = dbConnection()
+    df = pd.read_sql_query(sqlStatement, engine)
+    startDate = df.at[0,'']
+    startDate = startDate + timedelta(days=1)
+    startDate = int(startDate.strftime('%Y%m%d'))
+    endDate = int((datetime.now() - timedelta(days=1)).strftime('%Y%m%d'))
+
+    return(startDate, endDate)
+
+
+''' Returns the date of the last goal scored and yesterdays date'''
+def get_dateRange():
+    sqlStatement = 'SELECT MIN(goalDate) from nhl.dbo.goals'
+    engine = dbConnection()
+    df = pd.read_sql_query(sqlStatement, engine)
+    firstDate = df.at[0,'']
+    firstDate = int(firstDate.strftime('%Y%m%d'))
+    sqlStatement = 'SELECT MAX(goalDate) from nhl.dbo.goals'
+    engine = dbConnection()
+    df = pd.read_sql_query(sqlStatement, engine)
+    endDate = df.at[0,'']
+    endDate = int(endDate.strftime('%Y%m%d'))
+
+    return(firstDate, endDate)
